@@ -8,7 +8,7 @@
   // ],
   "vars": {
     "DATABASE_URL": "my-variable"
-  },
+  }
   // "kv_namespaces": [
   //   {
   //     "binding": "MY_KV_NAMESPACE",
