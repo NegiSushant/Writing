@@ -2,7 +2,9 @@ import { createBlogInput, updateBlogInput } from "@100xdevs/medium-common";
 import { Hono } from "hono";
 import { verify } from "hono/jwt";
 import { PrismaClient } from "@prisma/client/edge";
+// import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
+import { auth } from "hono/utils/basic-auth";
 
 export const blogRouter = new Hono<{
   Bindings: {
@@ -24,13 +26,13 @@ blogRouter.use("/*", async (c, next) => {
     } else {
       c.status(403);
       return c.json({
-        message: "You are not logged in!",
+        message: "You are not logged in",
       });
     }
   } catch (e) {
     c.status(403);
     return c.json({
-      message: "You are not logged in!",
+      message: "You are not logged in",
     });
   }
 });
@@ -84,4 +86,62 @@ blogRouter.put("/", async (c) => {
       content: body.content,
     },
   });
+
+  return c.json({
+    id: blog.id,
+  });
+});
+
+blogRouter.get("/bulk", async (c) => {
+  const prisma = new PrismaClient({
+    datasourcesurl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
+  const blogs = prisma.blog.findMany({
+    select: {
+      content: true,
+      title: true,
+      id: true,
+      auther: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  });
+  return c.json({
+    blogs,
+  });
+});
+
+blogRouter.get("/:id", async (c) => {
+  const id = c.req.param("id");
+  const prisma = new PrismaClient({
+    datasourcesurl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
+
+  try {
+    const blog = await prisma.blog.findMany({
+      where: {
+        id: Number(id),
+      },
+      select: {
+        id: true,
+        content: true,
+        title: true,
+        auther: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+    return c.json({
+      blog,
+    });
+  } catch (e) {
+    c.status(411);
+    return c.json({
+      message: "Error while fetching blog post!",
+    });
+  }
 });
