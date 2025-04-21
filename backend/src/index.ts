@@ -1,9 +1,18 @@
-import { Hono } from 'hono'
+import { Hono } from "hono";
+import { cors } from "hono/cors";
 
-const app = new Hono()
+const app = new Hono<{
+  Bindings: {
+    DATABASE_URL: string;
+    JWT_SECRET: string;
+  };
+}>();
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
 
-export default app
+app.use('/*', cors())
+
+// app.get("/", (c) => {
+//   return c.text("Hello Hono!");
+// });
+
+export default app;
